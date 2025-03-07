@@ -1,17 +1,36 @@
-// pages/students/page.tsx
-'use client' // Diretriz que garante que o código será executado no lado do cliente
+'use client';
 
+import { useState } from "react";
 import { Box, SimpleGrid, Heading, Text, HStack, Button, Flex, Spinner } from "@chakra-ui/react";
-import { CardStudent } from "@/components/global/Card";
-import Link from "next/link";
 import { Student, useStudents } from "@/hooks/useStudents";
 import { useRouter } from "next/navigation";
+import { mockStudents } from "@/mock/mockStudent";
+import { CardStudentData, mockStudent } from "@/components/global/CardStudent";
 
 export default function AllStudents() {
   const { data: students, isLoading, error } = useStudents();
-  const router = useRouter();  // Usando o useRouter aqui
+  const router = useRouter();
 
-  // Função para navegar para a página de detalhes do aluno
+  // Estado para armazenar a página atual
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 5; // Número de alunos por página
+
+  // Calculando os índices de alunos para exibição
+  const indexOfLastStudent = currentPage * studentsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+  const currentStudents = mockStudents?.slice(indexOfFirstStudent, indexOfLastStudent);
+
+  // Calcular total de páginas
+  const totalPages = students ? Math.ceil(mockStudents.length / studentsPerPage) : 0;
+
+  // Função para mudar de página
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Navegar para detalhes do aluno usando ID
   const handleDetailsClick = (id: number) => {
     if (id) {
       router.push(`/users/${id}`);
@@ -27,7 +46,6 @@ export default function AllStudents() {
 
   return (
     <Box p={5} maxW="100%" mx="auto" maxWidth={1480}>
-      {/* Título e Subtítulo */}
       <Heading as="h1" size="2xl" mb={4}>
         Bem-vindo à Lista de Alunos
       </Heading>
@@ -35,36 +53,54 @@ export default function AllStudents() {
         Aqui você pode visualizar os alunos e suas informações
       </Text>
 
-      {/* Menu de Navegação */}
-      <Flex justify="space-between" mb={6}>
-        <HStack gap={4} wrap="wrap">
-          <Button bg="red" width={{ base: "100%", sm: "auto" }} mb={2}>
-            <Link href="/">Home</Link>
-          </Button>
-          <Button bg="blue" width={{ base: "100%", sm: "auto" }} mb={2}>
-            <Link href="/alunos">Alunos</Link>
-          </Button>
-          <Button bg="teal" width={{ base: "100%", sm: "auto" }} mb={2}>
-            <Link href="/turmas">Turmas</Link>
-          </Button>
-        </HStack>
-      </Flex>
+      <HStack display={'flex'} gap={5} alignItems={'center'}>
+        <Button onClick={() => router.push(`/students/1A`)}>Turma 1A</Button>
+        <Button onClick={() => router.push(`/students/2B`)}>Turma 2B</Button>
+        <Button onClick={() => router.push(`/students/3A`)}>Turma 3A</Button>
+      </HStack>
 
-      {/* Lista de Alunos */}
       <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 5 }} gap={6}>
-        {students?.map((student: Student) => (
-          <CardStudent
+        {currentStudents?.map((student) => (
+          <CardStudentData
             key={student.id}
             id={student.id}
-            username={student.username}
-            name={student.name}
-            email={student.email}
+            name_student={student.name_student} // Convertendo 'name_student' para 'name'
+            name_class={student.name_class} // Adaptando para outra prop do CardStudent
+            teacher={student.teacher}
             phone={student.phone}
-            website={student.website}
+            period={student.period}
+            birthdate={student.birthdate}
             onClick={() => handleDetailsClick(student.id)}
           />
         ))}
       </SimpleGrid>
+
+
+      {/* Paginação */}
+      <Flex justify="center" mt={6} gap={4}>
+        <Button
+          onClick={() => handlePageChange(currentPage - 1)}
+          isDisabled={currentPage === 1}
+        >
+          Anterior
+        </Button>
+        <Text>Página {currentPage} de {totalPages}</Text>
+        <Button
+          onClick={() => handlePageChange(currentPage + 1)}
+          isDisabled={currentPage === totalPages}
+        >
+          Próximo
+        </Button>
+      </Flex>
     </Box>
   );
 }
+
+
+
+// eu tenho uma duvida sobre a estrutura das pastas no projeto...
+
+// Geralmente quando voce tem um produto, esse produto pertence a uma categoria, logo seria algo como: all-produtcts/category/name-category/product, 
+
+// No nosso caso eu queria saber se o nosso projeto segue algo parecido, tendo em vista que todos os alunos estao dentro de uma turma, entao cada turma tem um nome e depois encontramos o aluno, e assim mesmo?
+
